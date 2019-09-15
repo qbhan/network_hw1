@@ -33,7 +33,7 @@ int open_clientfd(char *hostname, char *port) {
     addr.sin_family = AF_INET;
     inet_pton(AF_INET, hostname, &addr.sin_addr);
     addr.sin_port = htons(atoi(port));
-    if (connect(clientfd, (struct sockaddr*)&addr, sizeof(addr)) < 0)
+    if (connect(clientfd, addr, sizeof(addr)) < 0)
     {
         return -1;
     }
