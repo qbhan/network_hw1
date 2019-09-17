@@ -22,6 +22,7 @@
 #include <netinet/in.h>
 #include <fcntl.h>
 
+
 int open_listenfd(char *port)
 {
     int listenfd;
@@ -118,7 +119,7 @@ int main(int argc, char* argv[]) {
     clientlen = sizeof(struct sockaddr_storage);
     connfd = accept(listenfd, (struct sockaddr*) &clientaddr, &clientlen);
     printf("Connection socket : %d\n", listenfd);
-    printf("Waiting for request...\n");
+    printf(Waiting for request...\n");
     while(1){
         recv(connfd, buf, 1024, 0);
         sscanf(buf, "%s %s", command, filename);

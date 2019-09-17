@@ -27,6 +27,7 @@ char* get_lower_string(const char* word){
     return word_Lower;
 }
 
+
 //////////////////////////////////////////////////////////
 //Return n_values from corresponding keyword.
 //Need to handle allocation error.
@@ -54,18 +55,22 @@ char* decrypt(const char* keyword, const char* cyphertext){
     
 //    char plaintext[text_Length];
     char* plaintext;
-    plaintext = strdup(cyphertext);
+    char* cyphertext_lower = get_lower_string(cyphertext);
+    plaintext = strdup(cyphertext_lower);
     
     int* n_values = get_n_values(keyword);
     int keyword_Length = (int)strlen(keyword);
     
+    int key_cnt = 0;
     for (int i=0; i<text_Length; i++){
-        int cnt = i % keyword_Length;
-        int ch = (int)plaintext[i] - n_values[cnt];
-        if (ch < 97){
-            ch = ch + 26;
+        if (isalpha(plaintext[i])){
+            int cnt = key_cnt++ % keyword_Length;
+            int ch = (int)plaintext[i] - n_values[cnt];
+            if (ch < 97){
+                ch = ch + 26;
+            }
+            plaintext[i] = (char)ch;
         }
-        plaintext[i] = (char)ch;
     }
 
     return plaintext;
@@ -81,19 +86,24 @@ char* encript(const char* keyword, const char* plaintext){
     
     //    char plaintext[text_Length];
     char* cyphertext;
-    cyphertext = strdup(plaintext);
+    char* plaintext_lower = get_lower_string(plaintext);
+    cyphertext = strdup(plaintext_lower);
     
     int* n_values = get_n_values(keyword);
     int keyword_Length = (int)strlen(keyword);
     
+    int key_cnt = 0;
     for (int i=0; i<text_Length; i++){
-        int cnt = i % keyword_Length;
-        int ch = (int)cyphertext[i] + n_values[cnt];
-//        printf("%d\n", ch);
-        if (ch > 122){
-            ch = ch - 26;
+        if (isalpha(cyphertext[i])){
+        
+            int cnt = key_cnt++ % keyword_Length;
+            int ch = (int)cyphertext[i] + n_values[cnt];
+    //        printf("%d\n", ch);
+            if (ch > 122){
+                ch = ch - 26;
+            }
+            cyphertext[i] = (char)ch;
         }
-        cyphertext[i] = (char)ch;
     }
     
     return cyphertext;
@@ -114,8 +124,8 @@ int main(int argc, const char * argv[]) {
     }
     printf("]\n");
 //    printf("%d\n", (int)sizeof("pedaqruw"));
-    printf("pedaqruw decrypted: %s\n", decrypt(keyword, "pedaqruw"));
-    printf("networks encrypted: %s\n", encript(keyword, "networks"));
+//    printf("pedaqruw decrypted: %s\n", decrypt(keyword, "pedaqruw"));
+    printf("I love CS341! encrypted: %s\n", encript(keyword, "I love CS341!"));
     return 0;
     
     
