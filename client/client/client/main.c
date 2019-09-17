@@ -99,7 +99,7 @@ int getclientfd(char* host, char* port){
     
     if (connect(client_fd, (struct sockaddr*)&sa, sizeof(sa)) < 0){
         printf("SOCKET CONNECTION FAILED\n");
-        exit(1);
+        return -1;
     }
     printf("SOCKET SUCCESSFULLY CONNECTED\n");
     
@@ -150,11 +150,12 @@ int main(int argc, char *argv[]) {
     port = argv[4];
     op = atoi(argv[6]);
     keyword = argv[8];
-//    strncpy(keyword, argv[8], 4);
+//    strcpy(keyword, argv[8]);
     printf("input host: %s\n", host);
     printf("input port: %s\n", port);
     printf("input op: %d\n", op);
     printf("input keyword: %s\n", keyword);
+//    printf("input keyword: %s\n", argv[8]);
     client_fd = getclientfd(host, port);
     if (client_fd == -1){
         printf("FAILED CONNECTION\n");
@@ -164,7 +165,7 @@ int main(int argc, char *argv[]) {
     fgets(buff, 2048, stdin);
 //    protocol_len = 16 + (int)strlen(buff);
 //    printf("length = %d\n", protocol_len);
-//    printf("length = %d\n", (int)strlen(buff));
+    printf("length = %d\n", (int)strlen(buff));
 //    printf("%s\n", buff);
 //    buff_len = (int)strlen(buff);
 //    send(client_fd, (void *)buff, buff_len, 0)
@@ -173,7 +174,7 @@ int main(int argc, char *argv[]) {
     proc->op = htons(op);
     proc->checksum = 0x0000;
 //    printf("here?\n");
-    strncpy(proc->keyword, keyword, 4);
+    strncpy((char *)proc->keyword, keyword, 4);
 //    printf("there?\n");
 //    strncpy(proc+8, keyword, 4);
     proc->length = proc_len;
@@ -203,7 +204,7 @@ int main(int argc, char *argv[]) {
     
     unsigned char *seudo;
     unsigned int protocol_data_size;
-    protocol_data_size = sizeof(pseudo_header)+ sizeof(protocol);
+    protocol_data_size = sizeof(pseudo_header) + sizeof(protocol);
     seudo = (unsigned char *)malloc(protocol_data_size);
     memcpy(seudo, psh, sizeof(pseudo_header));
     memcpy(seudo+sizeof(pseudo_header), myth, sizeof(protocol));
@@ -214,16 +215,17 @@ int main(int argc, char *argv[]) {
     proc->checksum = in_checksum((unsigned short*)seudo, protocol_data_size);
     printf("checksum is :%d\n", proc->checksum);
     
-//    printf()
+
     if (send(client_fd, proc, proc_len, 0) < 0){
         perror("ERROR WHEN SENDING\n");
         return 0;
     }
-    // Send simple string
-    if (send(client_fd, buff, proc_len, 0) < 0){
-        perror("ERROR WHEN SENDING\n");
-        return 0;
-    }
+    
+    // send simple string
+//    if (send(client_fd, buff, proc_len, 0) < 0){
+//        perror("ERROR WHEN SENDING\n");
+//        return 0;
+//    }
     printf("op in protocol: %hu\n", proc->op);
     printf("checksum in protocol: %hu\n", proc->checksum);
     printf("keyword in protocol: %s\n", proc->keyword);

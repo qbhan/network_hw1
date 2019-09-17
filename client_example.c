@@ -176,7 +176,7 @@ int main(int argc, char* argv[]) {
     char command[1024];
     host = argv[2];
     port = argv[4];
-    clientfd = open_clientfd(host, port);
+    clientfd = open_clientfds(host, port);
     if (clientfd == -1){
         printf("Connection Failed.\n");
         exit(1);

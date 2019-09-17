@@ -66,7 +66,7 @@ int main(int argc, char * argv[]) {
     
     while(1){
         new_fd = accept(sockfd, (struct sockaddr*)&their_sa, &addr_size);
-        if (new_fd > 0){
+        if (new_fd == -1){
             perror("ACCEPTION ERROR");
             exit(1);
         }
