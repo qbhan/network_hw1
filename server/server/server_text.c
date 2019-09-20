@@ -14,6 +14,7 @@
 #include <arpa/inet.h>
 #include <sys/wait.h>
 #include <signal.h>
+#include <ctype.h>
 //#define PORT "1234"  // the port users will be connecting to
 #define BACKLOG 10   // how many pending connections queue will hold
 void sigchld_handler(int s)
@@ -41,6 +42,103 @@ struct protocol {
     char        data[];
 };
 
+///////////////////////////////////////////////////////////
+//Change all characters in string to lower cases.
+//Need to handle allocation error.
+///////////////////////////////////////////////////////////
+char* get_lower_string(char* word){
+    int length = (int)strlen(word);
+    char* word_Lower;
+    word_Lower = (char*)malloc(sizeof(char)*length);
+    
+    for (int i=0; i<length; i++){
+        word_Lower[i] = tolower(word[i]);
+    }
+    
+    return word_Lower;
+}
+
+//////////////////////////////////////////////////////////
+//Return n_values from corresponding keyword.
+//Need to handle allocation error.
+//////////////////////////////////////////////////////////
+int* get_n_values(char* keyword){
+    const char* keyword_Lower = get_lower_string(keyword);
+    int keyword_Length = (int)strlen(keyword_Lower);
+    int* n_values;
+    n_values = (int*)malloc(sizeof(int)*keyword_Length);
+    
+    for (int i =0; i<keyword_Length; i++) {
+        n_values[i] = (int)keyword_Lower[i]-97;
+    }
+    
+    return n_values;
+}
+
+///////////////////////////////////////////////////////////
+//Decrypt given text according to keyword.
+//Need to handle allocation error.
+///////////////////////////////////////////////////////////
+char* decrypt(char* keyword, char* cyphertext){
+    int text_Length = (int)strlen(cyphertext);
+    //    printf("%d\n", text_Length);
+    
+    //    char plaintext[text_Length];
+    char* plaintext;
+    char* cyphertext_lower = get_lower_string(cyphertext);
+    plaintext = strdup(cyphertext_lower);
+    
+    int* n_values = get_n_values(keyword);
+    int keyword_Length = (int)strlen(keyword);
+    
+    int key_cnt = 0;
+    for (int i=0; i<text_Length; i++){
+        if (isalpha(plaintext[i])){
+            int cnt = key_cnt++ % keyword_Length;
+            int ch = (int)plaintext[i] - n_values[cnt];
+            if (ch < 97){
+                ch = ch + 26;
+            }
+            plaintext[i] = (char)ch;
+        }
+    }
+    
+    return plaintext;
+}
+
+///////////////////////////////////////////////////////////
+//Encrypt given text according to keyword.
+//Need to handle allocation error.
+///////////////////////////////////////////////////////////
+char* encript(char* keyword, char* plaintext){
+    int text_Length = (int)strlen(plaintext);
+    //    printf("%d\n", text_Length);
+    
+    //    char plaintext[text_Length];
+    char* cyphertext;
+    char* plaintext_lower = get_lower_string(plaintext);
+    cyphertext = strdup(plaintext_lower);
+    
+    int* n_values = get_n_values(keyword);
+    int keyword_Length = (int)strlen(keyword);
+    
+    int key_cnt = 0;
+    for (int i=0; i<text_Length; i++){
+        if (isalpha(cyphertext[i])){
+            
+            int cnt = key_cnt++ % keyword_Length;
+            int ch = (int)cyphertext[i] + n_values[cnt];
+            //        printf("%d\n", ch);
+            if (ch > 122){
+                ch = ch - 26;
+            }
+            cyphertext[i] = (char)ch;
+        }
+    }
+    
+    return cyphertext;
+}
+
 int main(int argc, char * argv[])
 {
     int sockfd, new_fd;  // listen on sock_fd, new connection on new_fd
@@ -52,6 +150,8 @@ int main(int argc, char * argv[])
     char s[INET6_ADDRSTRLEN];
     int rv;
     char *port = argv[2];
+    char recv_buff[1000000];
+    char keyword[4];
     
     memset(&hints, 0, sizeof hints);
     hints.ai_family = AF_UNSPEC;
@@ -109,9 +209,21 @@ int main(int argc, char * argv[])
                 perror("receive");
             };
             printf("Data received\n%s\n", recv_proc->data);
+//            strcpy(recv_buff, recv_proc->data);
+//            strcpy(keyword, recv_proc->keyword);
+            if(recv_proc->op == 0){
+                strcpy(recv_buff, encript((char *)recv_proc->keyword, recv_proc->data));
+//                printf("Encript\n%s\n",encript((char *)recv_proc->keyword, recv_proc->data));
+                printf("Encript\n%s\n",recv_buff);
+            } else if(recv_proc->op == 1){
+                strcpy(recv_buff, decrypt((char *)recv_proc->keyword, recv_proc->data));
+                printf("Decript\n%s\n",recv_buff);
+            }
+            strcpy(recv_proc->data, recv_buff);
+            printf("recv_proc data\n%s\n",recv_proc->data);
             
-//            if (send(new_fd, "Hello, world!", 13, 0) == -1)
-//                perror("send");
+            if (send(new_fd, recv_proc, 1000000, 0) == -1)
+                perror("send");
             close(new_fd);
             exit(0);
         }
